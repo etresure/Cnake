@@ -13,13 +13,32 @@
 #define STEP_PER_SEC 6
 #define FPS 60
 
+#define LOAD_IMAGE(IMAGE, PATH)  \
+    do{ (IMAGE) = LoadTexture((PATH));\
+        if ((IMAGE).width == 0){\
+            fprintf(stderr, "Can't load the image\n");\
+            return -1;\
+        }\
+    } while (0)
+
+#define LOAD_SOUND(SOUND, PATH) \
+    do{ (SOUND) = LoadSound((PATH));\
+        if ((SOUND).stream.channels == 0){\
+            fprintf(stderr, "Can't load the sound\n");\
+            return -1;\
+        }\
+    } while(0); 
+
 enum CellType{EMPTY = 0, FOOD, SNAKE};
 enum Direction{UP, DOWN, LEFT, RIGHT};
-enum State{PLAY, END, RESTART, START};
+enum State{PLAY, END, RESTART, START, WIN};
 struct Snake{
     Texture2D head;
     Texture2D dead_head;
     Texture2D body_layer;
+    Sound eat;
+    Sound dead; 
+    Sound win;
     int body[BOARD_WIDTH * BOARD_HEIGHT];
     int tail;
     int count;
@@ -28,6 +47,7 @@ struct Snake{
     enum Direction prev_direction;
 };
 Texture2D apple_pic;
+Music background_music;
 enum State state;
 int ham_cycle[BOARD_HEIGHT][BOARD_WIDTH] = {0};
 int row_step[4] = {-1, 1, 0, 0};
@@ -95,6 +115,20 @@ int check_collision(int row, int col){
 }
 
 void generate_apple(void){
+    int empty_count = 0;
+    for (int i = 0; i < BOARD_HEIGHT * BOARD_WIDTH; i++){
+        if (board[i] == EMPTY)
+            empty_count++;
+    }
+    if (empty_count == 0){
+        PlaySound(snake.win);
+        if (score > record){
+            record = score;
+            flag = 1;
+        }
+        state = END;
+        return;
+    }
     int max = BOARD_WIDTH * BOARD_HEIGHT - 1;
     int min = 0;
     int r = min + rand() % (max - min + 1);
@@ -148,6 +182,7 @@ void snake_step(void){
     col = (col + col_step[snake.direction] + BOARD_WIDTH) % BOARD_WIDTH;
     snake.prev_direction = snake.direction;
     if (check_apple(row, col)){
+        PlaySound(snake.eat);
         int new_head = row * BOARD_WIDTH + col;
         snake.count++;
         snake.body[(snake.tail + snake.count - 1) % (BOARD_WIDTH * BOARD_HEIGHT)] = new_head;
@@ -157,6 +192,7 @@ void snake_step(void){
         score++;
     }
     else if (check_collision(row, col)){
+        PlaySound(snake.dead);
         if (score > record){
             record = score;
             flag = 1;
@@ -191,8 +227,11 @@ void handle_input(void){
         snake.direction = LEFT;
     if ((IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_A)) && snake.prev_direction != LEFT && pause == 0) 
         snake.direction = RIGHT;    
-    if (IsKeyPressed(KEY_R))
+    if (IsKeyPressed(KEY_R)){
         state = RESTART;
+        StopSound(snake.win);
+        StopSound(snake.dead);
+    }
     if (IsKeyPressed(KEY_SPACE))
         pause = !pause;
     if (IsKeyPressed(KEY_B))
@@ -217,7 +256,10 @@ void update(void){
 }
 
 void render_game_over(void){
-    DrawText("GAME OVER!", WIDTH / 2 - 223, HEIGHT / 2 - 120, 70, GetColor(0xffffffff));
+    if (state == END)
+        DrawText("GAME OVER!", WIDTH / 2 - 223, HEIGHT / 2 - 120, 70, GetColor(0xffffffff));
+    else if (state == WIN)
+        DrawText("!VICTORY!", WIDTH / 2 - 213, HEIGHT / 2 - 120, 70, GetColor(0xffffffff));
     DrawText("Press R to Restart", WIDTH / 2 - 253, HEIGHT / 2 - 50, 50, GetColor(0xffffffff));
     if (flag){
         DrawText("NEW RECORD!", WIDTH / 2 - 173, HEIGHT / 2 + 25, 50, GetColor(0xff5f00ff));
@@ -295,7 +337,7 @@ void render(void){
     draw_head();
     draw_body();
     draw_apple();
-    if (state == END){
+    if (state == END || state == WIN){
         draw_head();
         render_game_over();
     }
@@ -313,30 +355,34 @@ void render(void){
 
 int main(void){
     InitWindow(WIDTH, HEIGHT, "snake");
-    snake.head = LoadTexture("./textures/snake_head_final.png");
-    if (snake.head.width == 0){
-        fprintf(stderr, "Can't load the image");
+    InitAudioDevice();
+    
+    LOAD_IMAGE(snake.head, "./source/textures/snake_head_final.png");
+    LOAD_IMAGE(snake.dead_head, "./source/textures/snake_head_dead.png");
+    LOAD_IMAGE(snake.body_layer, "./source/textures/snake_body.png");
+    LOAD_IMAGE(apple_pic, "./source/textures/apple.png");
+
+    LOAD_SOUND(snake.eat, "./source/sounds/eat.wav");
+    LOAD_SOUND(snake.dead, "./source/sounds/dead.wav");
+    LOAD_SOUND(snake.win, "./source/sounds/win.wav");
+
+    background_music = LoadMusicStream("./source/sounds/background_music.mp3");
+    if (background_music.ctxData == NULL){
+        fprintf(stderr, "Error: Failed to load background music.\n");
         return -1;
     }
-    snake.dead_head = LoadTexture("./textures/snake_head_dead.png");
-    if (snake.dead_head.width == 0){
-        fprintf(stderr, "Can't load the image");
-        return -1;
-    }
-    snake.body_layer = LoadTexture("./textures/snake_body.png");
-    if (snake.body_layer.width == 0){
-        fprintf(stderr, "Can't load the image");
-        return -1;
-    }
-    apple_pic= LoadTexture("./textures/apple.png");
-    if (apple_pic.width == 0){
-        fprintf(stderr, "Can't load the image");
-        return -1;
-    }
+    PlayMusicStream(background_music);
+
+    SetMasterVolume(1.0f);            
+    SetMusicVolume(background_music, 0.2f); 
+    SetSoundVolume(snake.eat, 1.0f);       
+    SetSoundVolume(snake.dead, 1.0f);
+    SetSoundVolume(snake.win, 1.0f);
     SetTargetFPS(FPS);
     state = START;
     init();
     while (!WindowShouldClose()){
+        UpdateMusicStream(background_music);
         handle_input();
         if (!pause){
             update();
@@ -347,7 +393,16 @@ int main(void){
     }
     UnloadTexture(snake.head);
     UnloadTexture(snake.dead_head);
+    UnloadTexture(snake.body_layer);
     UnloadTexture(apple_pic);
+
+    UnloadSound(snake.eat);
+    UnloadSound(snake.dead);
+    UnloadSound(snake.win);
+
+    StopMusicStream(background_music);
+    UnloadMusicStream(background_music);
+
     CloseWindow();
     
     return 0;
