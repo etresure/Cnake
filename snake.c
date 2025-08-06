@@ -58,7 +58,7 @@ int pause = 0;
 int auto_snake = 0;
 int score = 0;
 int record = 0;
-int flag = 0;
+int set_new_record = 0;
 
 enum CellType board[BOARD_WIDTH * BOARD_HEIGHT] = {0};
 struct Snake snake;
@@ -125,7 +125,7 @@ void generate_apple(void){
         PlaySound(snake.win);
         if (score > record){
             record = score;
-            flag = 1;
+            set_new_record = 1;
         }
         state = END;
         return;
@@ -196,7 +196,7 @@ void snake_step(void){
         PlaySound(snake.dead);
         if (score > record){
             record = score;
-            flag = 1;
+            set_new_record = 1;
         }
         state = END;
     }
@@ -211,7 +211,7 @@ void snake_step(void){
 }
 
 void init(void){
-    flag = 0;
+    set_new_record = 0;
     srand(time(NULL));
     score = 0;
     generate_snake();
@@ -264,7 +264,7 @@ void render_game_over(void){
     else if (state == WIN)
         DrawText("!VICTORY!", WIDTH / 2 - 213, HEIGHT / 2 - 120, 70, GetColor(0xffffffff));
     DrawText("Press R to Restart", WIDTH / 2 - 253, HEIGHT / 2 - 50, 50, GetColor(0xffffffff));
-    if (flag){
+    if (set_new_record){
         DrawText("NEW RECORD!", WIDTH / 2 - 173, HEIGHT / 2 + 25, 50, GetColor(0xff5f00ff));
         char buff[32];
         sprintf(buff, "Record: %d", record);
@@ -316,7 +316,7 @@ void draw_body(void) {
 void draw_apple(void){
     int row = apple / BOARD_WIDTH;
     int col = apple % BOARD_WIDTH;
-    if (state == END && state == WIN)
+    if (state == END || state == WIN)
         DrawTextureEx(apple_pic_end, CLITERAL(Vector2){col * CELL_SIZE + 2, row * CELL_SIZE + 2}, 0, (CELL_SIZE - 4) / (float)apple_pic_end.width, WHITE);
     else
         DrawTextureEx(apple_pic, CLITERAL(Vector2){col * CELL_SIZE + 2, row * CELL_SIZE + 2}, 0, (CELL_SIZE - 4) / (float)apple_pic.width, WHITE);
@@ -381,7 +381,7 @@ int main(void){
     PlayMusicStream(background_music);
 
     SetMasterVolume(1.0f);            
-    SetMusicVolume(background_music, 0.2f); 
+    SetMusicVolume(background_music, 0.3f); 
     SetSoundVolume(snake.eat, 1.0f);       
     SetSoundVolume(snake.dead, 1.0f);
     SetSoundVolume(snake.win, 1.0f);
@@ -416,4 +416,3 @@ int main(void){
     return 0;
 }
 
-//эмоция змеи во время еды [ ]
