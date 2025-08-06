@@ -1,7 +1,7 @@
 CC = gcc
 LIBS = -lraylib -L. -lglfw3 -framework Cocoa -framework IOKit
-SRC = snake.c
-OUT = snake
+SRC = cnake.c
+OUT = cnake
 
 all: $(OUT)
 

@@ -360,7 +360,7 @@ void render(void){
 }
 
 int main(void){
-    InitWindow(WIDTH, HEIGHT, "snake");
+    InitWindow(WIDTH, HEIGHT, "cnake");
     InitAudioDevice();
     
     LOAD_IMAGE(snake.head, "./source/textures/snake_head_final.png");
