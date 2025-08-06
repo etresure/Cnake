@@ -36,6 +36,8 @@ int apple;
 int pause = 0;
 int auto_snake = 0;
 int score = 0;
+int record = 0;
+int flag = 0;
 
 enum CellType board[BOARD_WIDTH * BOARD_HEIGHT] = {0};
 struct Snake snake;
@@ -155,6 +157,10 @@ void snake_step(void){
         score++;
     }
     else if (check_collision(row, col)){
+        if (score > record){
+            record = score;
+            flag = 1;
+        }
         state = END;
     }
     else{
@@ -168,6 +174,7 @@ void snake_step(void){
 }
 
 void init(void){
+    flag = 0;
     srand(time(NULL));
     score = 0;
     generate_snake();
@@ -210,8 +217,14 @@ void update(void){
 }
 
 void render_game_over(void){
-    DrawText("GAME OVER", WIDTH / 2 - 150, HEIGHT / 2 - 25, 50, GetColor(0xffffffff));
-    DrawText("Press R to Restart", WIDTH / 2 - 250, HEIGHT / 2 + 25, 50, GetColor(0xffffffff));
+    DrawText("GAME OVER!", WIDTH / 2 - 223, HEIGHT / 2 - 120, 70, GetColor(0xffffffff));
+    DrawText("Press R to Restart", WIDTH / 2 - 253, HEIGHT / 2 - 50, 50, GetColor(0xffffffff));
+    if (flag){
+        DrawText("NEW RECORD!", WIDTH / 2 - 173, HEIGHT / 2 + 25, 50, GetColor(0xff5f00ff));
+        char buff[32];
+        sprintf(buff, "Record: %d", record);
+        DrawText(buff, 10, 30, 20, GetColor(0xffffffff));
+    }
 }
 
 void draw_head(void){
@@ -283,14 +296,18 @@ void render(void){
     draw_body();
     draw_apple();
     if (state == END){
-        render_game_over();
         draw_head();
+        render_game_over();
     }
     char buff[32];
     sprintf(buff, "Score: %d", score);
-    DrawText(buff, 10, 10, 20, GetColor(0xffffffff));
+    DrawText(buff, 10, 5, 20, GetColor(0xffffffff));
+    sprintf(buff, "Record: %d", record);
+    DrawText(buff, 10, 30, 20, GetColor(0xffffffff));
     if (auto_snake)
-        DrawText("AUTO", 10, 35, 20, GREEN);
+        DrawText("AUTO", 512, 5, 20, GREEN);
+    if (pause)
+        DrawText("PAUSE", 507, 30, 20, GREEN);   
     EndDrawing();
 }
 
