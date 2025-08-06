@@ -47,6 +47,7 @@ struct Snake{
     enum Direction prev_direction;
 };
 Texture2D apple_pic;
+Texture2D apple_pic_end;
 Music background_music;
 enum State state;
 int ham_cycle[BOARD_HEIGHT][BOARD_WIDTH] = {0};
@@ -238,6 +239,8 @@ void handle_input(void){
         auto_snake = !auto_snake;
     if (state == START && IsKeyPressed(KEY_ENTER))
         state = PLAY;
+    if (IsKeyPressed(KEY_TAB))
+        state = START;
 }
 
 void update(void){
@@ -313,7 +316,10 @@ void draw_body(void) {
 void draw_apple(void){
     int row = apple / BOARD_WIDTH;
     int col = apple % BOARD_WIDTH;
-    DrawTextureEx(apple_pic, CLITERAL(Vector2){col * CELL_SIZE + 2, row * CELL_SIZE + 2}, 0, (CELL_SIZE - 4) / (float)apple_pic.width, WHITE);
+    if (state == END && state == WIN)
+        DrawTextureEx(apple_pic_end, CLITERAL(Vector2){col * CELL_SIZE + 2, row * CELL_SIZE + 2}, 0, (CELL_SIZE - 4) / (float)apple_pic_end.width, WHITE);
+    else
+        DrawTextureEx(apple_pic, CLITERAL(Vector2){col * CELL_SIZE + 2, row * CELL_SIZE + 2}, 0, (CELL_SIZE - 4) / (float)apple_pic.width, WHITE);
 }
 
 void render(void){ 
@@ -361,6 +367,7 @@ int main(void){
     LOAD_IMAGE(snake.dead_head, "./source/textures/snake_head_dead.png");
     LOAD_IMAGE(snake.body_layer, "./source/textures/snake_body.png");
     LOAD_IMAGE(apple_pic, "./source/textures/apple.png");
+    LOAD_IMAGE(apple_pic_end, "./source/textures/apple_end.png");
 
     LOAD_SOUND(snake.eat, "./source/sounds/eat.wav");
     LOAD_SOUND(snake.dead, "./source/sounds/dead.wav");
@@ -395,6 +402,7 @@ int main(void){
     UnloadTexture(snake.dead_head);
     UnloadTexture(snake.body_layer);
     UnloadTexture(apple_pic);
+    UnloadTexture(apple_pic_end);
 
     UnloadSound(snake.eat);
     UnloadSound(snake.dead);
@@ -407,3 +415,5 @@ int main(void){
     
     return 0;
 }
+
+//эмоция змеи во время еды [ ]
