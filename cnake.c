@@ -162,6 +162,8 @@ void update_snake_direction_cycle(void){
     for (int dir = 0; dir < 4; dir++){
         int new_row = (row + row_step[dir] + BOARD_HEIGHT) % BOARD_HEIGHT;
         int new_col = (col + col_step[dir] + BOARD_WIDTH) % BOARD_WIDTH;
+        if (board[new_row * BOARD_WIDTH + new_col] == SNAKE)
+            continue;
         int curr_val = ham_cycle[row][col];
         int neighbor_val = ham_cycle[new_row][new_col];
         int dist = (neighbor_val - curr_val + BOARD_WIDTH * BOARD_HEIGHT) % (BOARD_WIDTH * BOARD_HEIGHT);
