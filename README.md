@@ -76,7 +76,7 @@ make
 Если make не установлен, то можно собрать вручную:
 
 ```bash
-gcc snake.c -o snake \
+gcc сnake.c -o сnake \
   -lraylib -L. -lglfw3 \
   -framework Cocoa -framework IOKit -framework OpenGL
 ```
